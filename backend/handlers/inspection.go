@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -82,12 +81,12 @@ func GetInspectionRecords(c echo.Context) error {
 
 	type row struct {
 		models.InspectionRecord
-		StdName sql.NullString `db:"std_name"`
+		StdName string `db:"std_name"`
 	}
-	querySQL := `SELECT ir.id, ir.inspection_no, ir.inspection_type, ir.target_batch_id, ir.target_batch_no,
-		ir.standard_id, ir.inspect_qty, ir.qualified_qty, ir.defect_qty, ir.result, ir.inspector,
-		ir.inspect_time, ir.remark, ir.created_at, ir.updated_at,
-		iss.std_name
+	querySQL := `SELECT ir.id, ir.inspection_no, ir.inspection_type, ir.target_batch_id, IFNULL(ir.target_batch_no,'') AS target_batch_no,
+		ir.standard_id, ir.inspect_qty, ir.qualified_qty, ir.defect_qty, ir.result, IFNULL(ir.inspector,'') AS inspector,
+		ir.inspect_time, IFNULL(ir.remark,'') AS remark, ir.created_at, ir.updated_at,
+		IFNULL(iss.std_name,'') AS std_name
 		FROM inspection_records ir
 		LEFT JOIN inspection_standards iss ON ir.standard_id = iss.id ` + where + `
 		ORDER BY ir.id DESC LIMIT ? OFFSET ?`
@@ -101,7 +100,7 @@ func GetInspectionRecords(c echo.Context) error {
 
 	result := make([]models.InspectionRecord, 0, len(rows))
 	for _, r := range rows {
-		r.InspectionRecord.StdName = r.StdName.String
+		r.InspectionRecord.StdName = r.StdName
 		result = append(result, r.InspectionRecord)
 	}
 	return utils.OK(c, utils.PageResult(result, total, page, pageSize))
@@ -114,9 +113,9 @@ func GetInspectionRecordDetail(c echo.Context) error {
 	}
 
 	var rec models.InspectionRecord
-	sql := `SELECT id, inspection_no, inspection_type, target_batch_id, target_batch_no,
-		standard_id, inspect_qty, qualified_qty, defect_qty, result, inspector,
-		inspect_time, remark, created_at, updated_at
+	sql := `SELECT id, inspection_no, inspection_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no,
+		standard_id, inspect_qty, qualified_qty, defect_qty, result, IFNULL(inspector,'') AS inspector,
+		inspect_time, IFNULL(remark,'') AS remark, created_at, updated_at
 		FROM inspection_records WHERE id = ?`
 	if err := database.DB.Get(&rec, sql, id); err != nil {
 		log.Printf("[ERROR] get inspection record: %v", err)
@@ -125,7 +124,7 @@ func GetInspectionRecordDetail(c echo.Context) error {
 
 	items := []models.InspectionItem{}
 	if err := database.DB.Select(&items,
-		`SELECT id, record_id, item_name, standard_value, actual_value, unit, result, method, memo, created_at
+		`SELECT id, record_id, item_name, standard_value, actual_value, unit, result, method, IFNULL(memo,'') AS memo, created_at
 		FROM inspection_items WHERE record_id = ? ORDER BY id`, id); err != nil {
 		log.Printf("[ERROR] get inspection items: %v", err)
 	}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"qualitytrace/database"
@@ -195,7 +194,7 @@ func GetEquipmentList(c echo.Context) error {
 
 func GetWorkShiftList(c echo.Context) error {
 	list := []models.WorkShift{}
-	if err := database.DB.Select(&list, "SELECT id, shift_code, shift_name, shift_type, leader, members, status, remark, created_at, updated_at FROM work_shifts ORDER BY id"); err != nil {
+	if err := database.DB.Select(&list, "SELECT id, shift_code, shift_name, shift_type, IFNULL(leader,'') AS leader, IFNULL(members,'') AS members, status, IFNULL(remark,'') AS remark, created_at, updated_at FROM work_shifts ORDER BY id"); err != nil {
 		log.Printf("[ERROR] query work shifts: %v", err)
 		return utils.Fail(c, 500, "查询失败")
 	}
@@ -210,16 +209,16 @@ func GetProductionLogs(c echo.Context) error {
 
 	type row struct {
 		models.ProductionLog
-		EquipCode sql.NullString `db:"equip_code"`
-		EquipName sql.NullString `db:"equip_name"`
-		ShiftName sql.NullString `db:"shift_name"`
-		ShiftType sql.NullInt64  `db:"shift_type"`
+		EquipCode string `db:"equip_code"`
+		EquipName string `db:"equip_name"`
+		ShiftName string `db:"shift_name"`
+		ShiftType int    `db:"shift_type_code"`
 	}
 	rows := []row{}
 	sql := `SELECT pl.id, pl.prod_batch_id, pl.equipment_id, pl.shift_id, pl.process_step, pl.start_time, pl.end_time,
 		IFNULL(pl.operator,'') AS operator, pl.output_qty, pl.defect_qty,
 		IFNULL(pl.remark,'') AS remark, pl.created_at, pl.updated_at,
-		e.equip_code, e.equip_name, ws.shift_name, ws.shift_type
+		IFNULL(e.equip_code,'') AS equip_code, IFNULL(e.equip_name,'') AS equip_name, IFNULL(ws.shift_name,'') AS shift_name, IFNULL(ws.shift_type,0) AS shift_type_code
 		FROM production_logs pl
 		LEFT JOIN equipment e ON pl.equipment_id = e.id
 		LEFT JOIN work_shifts ws ON pl.shift_id = ws.id
@@ -231,12 +230,10 @@ func GetProductionLogs(c echo.Context) error {
 
 	result := make([]models.ProductionLog, 0, len(rows))
 	for _, r := range rows {
-		r.ProductionLog.EquipCode = r.EquipCode.String
-		r.ProductionLog.EquipName = r.EquipName.String
-		r.ProductionLog.ShiftName = r.ShiftName.String
-		if r.ShiftType.Valid {
-			r.ProductionLog.ShiftType = int(r.ShiftType.Int64)
-		}
+		r.ProductionLog.EquipCode = r.EquipCode
+		r.ProductionLog.EquipName = r.EquipName
+		r.ProductionLog.ShiftName = r.ShiftName
+		r.ProductionLog.ShiftType = r.ShiftType
 		result = append(result, r.ProductionLog)
 	}
 	return utils.OK(c, result)
@@ -250,18 +247,18 @@ func GetBatchMaterialLinks(c echo.Context) error {
 
 	type row struct {
 		models.BatchMaterialLink
-		ProdBatchNo     sql.NullString `db:"prod_batch_no"`
-		MaterialBatchNo sql.NullString `db:"material_batch_no"`
-		MaterialName    sql.NullString `db:"material_name"`
-		MaterialCode    sql.NullString `db:"material_code"`
+		ProdBatchNo     string `db:"prod_batch_no"`
+		MaterialBatchNo string `db:"material_batch_no"`
+		MaterialName    string `db:"material_name"`
+		MaterialCode    string `db:"material_code"`
 	}
 	rows := []row{}
 	sql := `SELECT bml.id, bml.prod_batch_id, bml.material_batch_id, bml.used_qty, bml.issue_time,
 		IFNULL(bml.issuer,'') AS issuer,
 		IFNULL(bml.receiver,'') AS receiver,
 		IFNULL(bml.remark,'') AS remark, bml.created_at,
-		pb.batch_no AS prod_batch_no, mb.batch_no AS material_batch_no,
-		m.material_name, m.material_code
+		IFNULL(pb.batch_no,'') AS prod_batch_no, IFNULL(mb.batch_no,'') AS material_batch_no,
+		IFNULL(m.material_name,'') AS material_name, IFNULL(m.material_code,'') AS material_code
 		FROM batch_material_links bml
 		LEFT JOIN production_batches pb ON bml.prod_batch_id = pb.id
 		LEFT JOIN material_batches mb ON bml.material_batch_id = mb.id
@@ -274,10 +271,10 @@ func GetBatchMaterialLinks(c echo.Context) error {
 
 	result := make([]models.BatchMaterialLink, 0, len(rows))
 	for _, r := range rows {
-		r.BatchMaterialLink.ProdBatchNo = r.ProdBatchNo.String
-		r.BatchMaterialLink.MaterialBatchNo = r.MaterialBatchNo.String
-		r.BatchMaterialLink.MaterialName = r.MaterialName.String
-		r.BatchMaterialLink.MaterialCode = r.MaterialCode.String
+		r.BatchMaterialLink.ProdBatchNo = r.ProdBatchNo
+		r.BatchMaterialLink.MaterialBatchNo = r.MaterialBatchNo
+		r.BatchMaterialLink.MaterialName = r.MaterialName
+		r.BatchMaterialLink.MaterialCode = r.MaterialCode
 		result = append(result, r.BatchMaterialLink)
 	}
 	return utils.OK(c, result)

@@ -54,9 +54,9 @@ func GetDefectRecords(c echo.Context) error {
 		return utils.Fail(c, 500, "查询失败")
 	}
 
-	querySQL := `SELECT id, defect_no, defect_type, target_batch_id, target_batch_no, inspection_id,
-		defect_code, defect_name, defect_desc, severity, defect_qty, reporter, report_time,
-		process_status, responsible, remark, created_at, updated_at
+	querySQL := `SELECT id, defect_no, defect_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no, inspection_id,
+		IFNULL(defect_code,'') AS defect_code, IFNULL(defect_name,'') AS defect_name, IFNULL(defect_desc,'') AS defect_desc, severity, defect_qty, IFNULL(reporter,'') AS reporter, report_time,
+		process_status, IFNULL(responsible,'') AS responsible, IFNULL(remark,'') AS remark, created_at, updated_at
 		FROM defect_records ` + where + ` ORDER BY id DESC LIMIT ? OFFSET ?`
 	args = append(args, pageSize, (page-1)*pageSize)
 
@@ -75,9 +75,9 @@ func GetDefectRecordDetail(c echo.Context) error {
 	}
 
 	var rec models.DefectRecord
-	sql := `SELECT id, defect_no, defect_type, target_batch_id, target_batch_no, inspection_id,
-		defect_code, defect_name, defect_desc, severity, defect_qty, reporter, report_time,
-		process_status, responsible, remark, created_at, updated_at
+	sql := `SELECT id, defect_no, defect_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no, inspection_id,
+		IFNULL(defect_code,'') AS defect_code, IFNULL(defect_name,'') AS defect_name, IFNULL(defect_desc,'') AS defect_desc, severity, defect_qty, IFNULL(reporter,'') AS reporter, report_time,
+		process_status, IFNULL(responsible,'') AS responsible, IFNULL(remark,'') AS remark, created_at, updated_at
 		FROM defect_records WHERE id = ?`
 	if err := database.DB.Get(&rec, sql, id); err != nil {
 		log.Printf("[ERROR] get defect record: %v", err)
@@ -85,8 +85,8 @@ func GetDefectRecordDetail(c echo.Context) error {
 	}
 
 	disps := []models.DefectDisposition{}
-	sql2 := `SELECT id, defect_id, disposition_type, disposition_qty, handler, handle_time,
-		approver, approve_time, approve_status, reason, rework_batch_no, cost, result,
+	sql2 := `SELECT id, defect_id, disposition_type, disposition_qty, IFNULL(handler,'') AS handler, handle_time,
+		IFNULL(approver,'') AS approver, approve_time, approve_status, IFNULL(reason,'') AS reason, IFNULL(rework_batch_no,'') AS rework_batch_no, cost, IFNULL(result,'') AS result,
 		created_at, updated_at FROM defect_dispositions WHERE defect_id = ? ORDER BY id`
 	if err := database.DB.Select(&disps, sql2, id); err != nil {
 		log.Printf("[ERROR] get defect dispositions: %v", err)

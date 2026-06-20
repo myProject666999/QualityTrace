@@ -2,11 +2,21 @@ package middleware
 
 import (
 	"log"
+	"qualitytrace/database"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
+
+func DBHealthCheck() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			database.EnsureDBConnection()
+			return next(c)
+		}
+	}
+}
 
 func DebugLogger() echo.MiddlewareFunc {
 	return echoMiddleware.RequestLoggerWithConfig(echoMiddleware.RequestLoggerConfig{

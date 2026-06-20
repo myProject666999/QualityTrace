@@ -21,26 +21,51 @@ var (
 
 func InitMySQL() {
 	dbOnce.Do(func() {
-		cfg := config.AppConfig.MySQL
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local&multiStatements=true",
-			cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database, cfg.Charset)
-
-		var err error
-		DB, err = sqlx.Connect("mysql", dsn)
-		if err != nil {
-			log.Fatalf("[FATAL] MySQL connection failed: %v", err)
-		}
-
-		DB.SetMaxOpenConns(cfg.MaxOpen)
-		DB.SetMaxIdleConns(cfg.MaxIdle)
-		DB.SetConnMaxLifetime(time.Hour)
-
-		if err = DB.Ping(); err != nil {
-			log.Fatalf("[FATAL] MySQL ping failed: %v", err)
-		}
-
-		log.Printf("[DEBUG] MySQL connected: host=%s port=%s db=%s", cfg.Host, cfg.Port, cfg.Database)
+		initDBConnection()
 	})
+}
+
+func initDBConnection() {
+	cfg := config.AppConfig.MySQL
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local&multiStatements=true",
+		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database, cfg.Charset)
+
+	var err error
+	DB, err = sqlx.Connect("mysql", dsn)
+	if err != nil {
+		log.Fatalf("[FATAL] MySQL connection failed: %v", err)
+	}
+
+	DB.SetMaxOpenConns(cfg.MaxOpen)
+	DB.SetMaxIdleConns(cfg.MaxIdle)
+	DB.SetConnMaxLifetime(30 * time.Minute)
+	DB.SetConnMaxIdleTime(10 * time.Minute)
+
+	if err = DB.Ping(); err != nil {
+		log.Fatalf("[FATAL] MySQL ping failed: %v", err)
+	}
+
+	log.Printf("[DEBUG] MySQL connected: host=%s port=%s db=%s", cfg.Host, cfg.Port, cfg.Database)
+}
+
+func ReconnectMySQL() {
+	if DB != nil {
+		DB.Close()
+	}
+	initDBConnection()
+}
+
+func EnsureDBConnection() bool {
+	if DB == nil {
+		ReconnectMySQL()
+		return true
+	}
+	if err := DB.Ping(); err != nil {
+		log.Printf("[WARN] MySQL connection lost (%v), reconnecting...", err)
+		ReconnectMySQL()
+		return true
+	}
+	return false
 }
 
 func InitRedis() {

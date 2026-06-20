@@ -58,9 +58,9 @@ func TraceForward(c echo.Context) error {
 
 	var prodBatch models.ProductionBatch
 	if batchID > 0 {
-		sql := `SELECT pb.id, pb.product_id, pb.batch_no, pb.work_order, pb.planned_qty, pb.actual_qty,
-			pb.production_date, pb.production_line, pb.status, pb.created_by, pb.remark, pb.created_at, pb.updated_at,
-			p.product_code, p.product_name
+		sql := `SELECT pb.id, pb.product_id, pb.batch_no, IFNULL(pb.work_order,'') AS work_order, pb.planned_qty, pb.actual_qty,
+			pb.production_date, IFNULL(pb.production_line,'') AS production_line, pb.status, IFNULL(pb.created_by,'') AS created_by, IFNULL(pb.remark,'') AS remark, pb.created_at, pb.updated_at,
+			IFNULL(p.product_code,'') AS product_code, IFNULL(p.product_name,'') AS product_name
 			FROM production_batches pb LEFT JOIN products p ON pb.product_id = p.id WHERE pb.id = ?`
 		type row struct {
 			models.ProductionBatch
@@ -77,9 +77,9 @@ func TraceForward(c echo.Context) error {
 		prodBatch = r.ProductionBatch
 		batchNo = prodBatch.BatchNo
 	} else {
-		sql := `SELECT pb.id, pb.product_id, pb.batch_no, pb.work_order, pb.planned_qty, pb.actual_qty,
-			pb.production_date, pb.production_line, pb.status, pb.created_by, pb.remark, pb.created_at, pb.updated_at,
-			p.product_code, p.product_name
+		sql := `SELECT pb.id, pb.product_id, pb.batch_no, IFNULL(pb.work_order,'') AS work_order, pb.planned_qty, pb.actual_qty,
+			pb.production_date, IFNULL(pb.production_line,'') AS production_line, pb.status, IFNULL(pb.created_by,'') AS created_by, IFNULL(pb.remark,'') AS remark, pb.created_at, pb.updated_at,
+			IFNULL(p.product_code,'') AS product_code, IFNULL(p.product_name,'') AS product_name
 			FROM production_batches pb LEFT JOIN products p ON pb.product_id = p.id WHERE pb.batch_no = ?`
 		type row struct {
 			models.ProductionBatch
@@ -172,16 +172,16 @@ func TraceForward(c echo.Context) error {
 		}
 	}
 
-	inspectSQL := `SELECT id, inspection_no, inspection_type, target_batch_id, target_batch_no,
-		standard_id, inspect_qty, qualified_qty, defect_qty, result, inspector, inspect_time, remark
+	inspectSQL := `SELECT id, inspection_no, inspection_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no,
+		standard_id, inspect_qty, qualified_qty, defect_qty, result, IFNULL(inspector,'') AS inspector, inspect_time, IFNULL(remark,'') AS remark
 		FROM inspection_records WHERE inspection_type IN (2,3) AND target_batch_id = ? ORDER BY id`
 	if err := database.DB.Select(&result.Inspections, inspectSQL, batchID); err != nil {
 		log.Printf("[ERROR] trace forward - inspections: %v", err)
 	}
 
-	defectSQL := `SELECT id, defect_no, defect_type, target_batch_id, target_batch_no,
-		defect_code, defect_name, defect_desc, severity, defect_qty, reporter,
-		report_time, process_status, responsible, remark
+	defectSQL := `SELECT id, defect_no, defect_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no,
+		IFNULL(defect_code,'') AS defect_code, IFNULL(defect_name,'') AS defect_name, IFNULL(defect_desc,'') AS defect_desc, severity, defect_qty, IFNULL(reporter,'') AS reporter,
+		report_time, process_status, IFNULL(responsible,'') AS responsible, IFNULL(remark,'') AS remark
 		FROM defect_records WHERE defect_type IN (2,3) AND target_batch_id = ? ORDER BY id`
 	if err := database.DB.Select(&result.Defects, defectSQL, batchID); err != nil {
 		log.Printf("[ERROR] trace forward - defects: %v", err)
@@ -216,9 +216,9 @@ func TraceBackward(c echo.Context) error {
 
 	var matBatch models.MaterialBatch
 	if batchID > 0 {
-		sql := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date, mb.supplier_batch,
-			mb.status, mb.warehouse, mb.inspector, mb.remark, mb.created_at, mb.updated_at,
-			m.material_code, m.material_name, m.material_type, m.specification, m.supplier
+		sql := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date, IFNULL(mb.supplier_batch,'') AS supplier_batch,
+			mb.status, IFNULL(mb.warehouse,'') AS warehouse, IFNULL(mb.inspector,'') AS inspector, IFNULL(mb.remark,'') AS remark, mb.created_at, mb.updated_at,
+			IFNULL(m.material_code,'') AS material_code, IFNULL(m.material_name,'') AS material_name, m.material_type, IFNULL(m.specification,'') AS specification, IFNULL(m.supplier,'') AS supplier
 			FROM material_batches mb LEFT JOIN materials m ON mb.material_id = m.id WHERE mb.id = ?`
 		type row struct {
 			models.MaterialBatch
@@ -241,9 +241,9 @@ func TraceBackward(c echo.Context) error {
 		matBatch = r.MaterialBatch
 		batchNo = matBatch.BatchNo
 	} else {
-		sql := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date, mb.supplier_batch,
-			mb.status, mb.warehouse, mb.inspector, mb.remark, mb.created_at, mb.updated_at,
-			m.material_code, m.material_name, m.material_type, m.specification, m.supplier
+		sql := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date, IFNULL(mb.supplier_batch,'') AS supplier_batch,
+			mb.status, IFNULL(mb.warehouse,'') AS warehouse, IFNULL(mb.inspector,'') AS inspector, IFNULL(mb.remark,'') AS remark, mb.created_at, mb.updated_at,
+			IFNULL(m.material_code,'') AS material_code, IFNULL(m.material_name,'') AS material_name, m.material_type, IFNULL(m.specification,'') AS specification, IFNULL(m.supplier,'') AS supplier
 			FROM material_batches mb LEFT JOIN materials m ON mb.material_id = m.id WHERE mb.batch_no = ?`
 		type row struct {
 			models.MaterialBatch
@@ -315,16 +315,16 @@ func TraceBackward(c echo.Context) error {
 		}
 	}
 
-	inspectSQL := `SELECT id, inspection_no, inspection_type, target_batch_id, target_batch_no,
-		standard_id, inspect_qty, qualified_qty, defect_qty, result, inspector, inspect_time, remark
+	inspectSQL := `SELECT id, inspection_no, inspection_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no,
+		standard_id, inspect_qty, qualified_qty, defect_qty, result, IFNULL(inspector,'') AS inspector, inspect_time, IFNULL(remark,'') AS remark
 		FROM inspection_records WHERE inspection_type = 1 AND target_batch_id = ? ORDER BY id`
 	if err := database.DB.Select(&result.Inspections, inspectSQL, batchID); err != nil {
 		log.Printf("[ERROR] trace backward - inspections: %v", err)
 	}
 
-	defectSQL := `SELECT id, defect_no, defect_type, target_batch_id, target_batch_no,
-		defect_code, defect_name, defect_desc, severity, defect_qty, reporter,
-		report_time, process_status, responsible, remark
+	defectSQL := `SELECT id, defect_no, defect_type, target_batch_id, IFNULL(target_batch_no,'') AS target_batch_no,
+		IFNULL(defect_code,'') AS defect_code, IFNULL(defect_name,'') AS defect_name, IFNULL(defect_desc,'') AS defect_desc, severity, defect_qty, IFNULL(reporter,'') AS reporter,
+		report_time, process_status, IFNULL(responsible,'') AS responsible, IFNULL(remark,'') AS remark
 		FROM defect_records WHERE defect_type = 1 AND target_batch_id = ? ORDER BY id`
 	if err := database.DB.Select(&result.Defects, defectSQL, batchID); err != nil {
 		log.Printf("[ERROR] trace backward - defects: %v", err)

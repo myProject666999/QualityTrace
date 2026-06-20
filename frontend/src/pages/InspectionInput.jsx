@@ -111,7 +111,7 @@ export default function InspectionInput() {
   };
 
   const calcStats = () => {
-    const inspectQty = Form.useWatch('inspectQty', form) || 0;
+    const inspectQty = form.getFieldValue('inspectQty') || 0;
     const defectItems = inspectionItems.filter(i => i.result === 2).length;
     const passed = defectItems === 0;
     return { inspectQty, defectItems, passed };

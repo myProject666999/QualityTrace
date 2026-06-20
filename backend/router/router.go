@@ -13,6 +13,7 @@ func New() *echo.Echo {
 
 	e.HideBanner = true
 
+	e.Use(middleware.DBHealthCheck())
 	e.Use(middleware.DebugLogger())
 	e.Use(middleware.CORS())
 	e.Use(echoMiddleware.Recover())
