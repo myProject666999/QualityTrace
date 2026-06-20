@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Table, Tag, Space, Card, Input, Select, Button, Drawer, Descriptions, List,
-  Modal, message, Badge, Row, Col, Statistic,
+  Modal, Badge, Row, Col, Statistic, App,
 } from 'antd';
 import { SearchOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, FileTextOutlined } from '@ant-design/icons';
 import request from '../api/index.js';
@@ -11,6 +11,7 @@ import { INSPECTION_TYPE, INSPECTION_RESULT } from '../utils/constants.js';
 const { Option } = Select;
 
 export default function InspectionList() {
+  const { message } = App.useApp();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);

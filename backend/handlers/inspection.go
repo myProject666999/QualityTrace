@@ -32,7 +32,10 @@ func GetInspectionStandards(c echo.Context) error {
 
 	list := []models.InspectionStandard{}
 	sql := `SELECT id, std_code, std_name, target_type, target_id, inspection_type, inspection_mode,
-		sampling_ratio, items, status, version, effective_date, created_by, description, created_at, updated_at
+		IFNULL(sampling_ratio,0) AS sampling_ratio, items, status,
+		IFNULL(version,'') AS version, IFNULL(effective_date,'') AS effective_date,
+		IFNULL(created_by,'') AS created_by,
+		IFNULL(description,'') AS description, created_at, updated_at
 		FROM inspection_standards ` + where + ` ORDER BY id DESC`
 	if err := database.DB.Select(&list, sql, args...); err != nil {
 		log.Printf("[ERROR] query inspection standards: %v", err)

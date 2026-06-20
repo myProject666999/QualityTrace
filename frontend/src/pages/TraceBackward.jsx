@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Card, Input, Button, Tag, Space, Row, Col, Descriptions, Table, Divider, Statistic, message, Empty, List, Alert, Spin, Progress, Cascader, Tooltip, Timeline,
+  Card, Input, Button, Tag, Space, Row, Col, Descriptions, Table, Divider, Statistic, Empty, List, Alert, Spin, Progress, Cascader, Tooltip, Timeline, App,
 } from 'antd';
 import {
   ArrowLeftOutlined, SearchOutlined, ExperimentOutlined, BugOutlined, ShoppingCartOutlined, SendOutlined, SyncOutlined,
@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import { MATERIAL_BATCH_STATUS, INSPECTION_RESULT, DEFECT_STATUS, PRODUCTION_STATUS } from '../utils/constants.js';
 
 export default function TraceBackward() {
+  const { message } = App.useApp();
   const [batchNo, setBatchNo] = useState('');
   const [matBatches, setMatBatches] = useState([]);
   const [loading, setLoading] = useState(false);

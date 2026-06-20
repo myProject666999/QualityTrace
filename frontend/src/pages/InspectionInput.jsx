@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Form, Select, Input, InputNumber, Button, DatePicker, Space, message, Card, Divider,
-  List, Tag, Radio, Statistic, Row, Col, Modal,
+  Form, Select, Input, InputNumber, Button, DatePicker, Space, Card, Divider,
+  List, Tag, Radio, Statistic, Row, Col, Modal, App,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ExperimentOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import request from '../api/index.js';
@@ -12,6 +12,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 export default function InspectionInput() {
+  const { message, modal } = App.useApp();
   const [form] = Form.useForm();
   const [standards, setStandards] = useState([]);
   const [products, setProducts] = useState([]);
@@ -143,7 +144,7 @@ export default function InspectionInput() {
       setSubmitting(true);
       const res = await request.post('/inspection/records', payload);
       message.success(`检验记录创建成功！单号: ${res.inspectionNo}`);
-      Modal.success({
+      modal.success({
         title: '检验记录已保存',
         content: (
           <div>

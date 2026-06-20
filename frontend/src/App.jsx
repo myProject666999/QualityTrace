@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Layout, Menu, theme } from 'antd';
+import { Layout, Menu, theme, App as AntApp } from 'antd';
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -76,7 +76,8 @@ export default function App() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <AntApp>
+      <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
         <div style={{
           height: 64,
@@ -132,6 +133,7 @@ export default function App() {
           </Routes>
         </Content>
       </Layout>
-    </Layout>
+      </Layout>
+    </AntApp>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Card, Table, Tag, Button, Input, Select, Space, DatePicker, Form, Modal, InputNumber, message, Row, Col, Statistic, Progress, Badge, List, Empty, Radio, Divider, Popconfirm,
+  Card, Table, Tag, Button, Input, Select, Space, DatePicker, Form, Modal, InputNumber, Row, Col, Statistic, Progress, Badge, List, Empty, Radio, Divider, Popconfirm, App,
 } from 'antd';
 import {
   BugOutlined, SearchOutlined, PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, WarningOutlined, ExclamationOutlined, FireOutlined, DeleteOutlined,
@@ -21,6 +21,7 @@ const severityIcon = {
 const dispositionColor = { 1: '#1677ff', 2: '#13c2c2', 3: '#ff4d4f', 4: '#fa8c16', 5: '#722ed1' };
 
 export default function DefectList() {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -225,7 +226,7 @@ export default function DefectList() {
         okText="提交"
         confirmLoading={addLoading}
         width={700}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={addForm} layout="vertical" onFinish={handleAdd} initialValues={{ defectType: 1, severity: 2, defectQty: 1, processStatus: 1 }}>
           <Row gutter={16}>

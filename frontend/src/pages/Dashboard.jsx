@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Tag, Spin, message, Table, Progress } from 'antd';
+import { Row, Col, Card, Statistic, Tag, Spin, Table, Progress, App } from 'antd';
 import {
   ExperimentOutlined,
   CheckCircleOutlined,
@@ -10,6 +10,7 @@ import {
 import request from '../api/index.js';
 
 export default function Dashboard() {
+  const { message } = App.useApp();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ cards: [], trend: [] });
 

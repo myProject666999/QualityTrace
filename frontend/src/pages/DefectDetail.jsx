@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Card, Descriptions, Tag, Badge, Button, List, Steps, Modal, Form, Input, InputNumber, Select, DatePicker, Row, Col, Divider, message, Space, Timeline, Empty, Progress, Statistic,
+  Card, Descriptions, Tag, Badge, Button, List, Steps, Modal, Form, Input, InputNumber, Select, DatePicker, Row, Col, Divider, Space, Timeline, Empty, Progress, Statistic, App,
 } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,7 @@ const { TextArea } = Input;
 const dispositionColor = { 1: '#1677ff', 2: '#13c2c2', 3: '#ff4d4f', 4: '#fa8c16', 5: '#722ed1' };
 
 export default function DefectDetail() {
+  const { message, modal } = App.useApp();
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -197,7 +198,7 @@ export default function DefectDetail() {
                               <Space>
                                 <span style={{ color: '#888' }}>待审批</span>
                                 <Button size="small" type="primary" loading={approveLoading[d.id]} onClick={() => {
-                                  Modal.confirm({
+                                  modal.confirm({
                                     title: '批准此处置方案？',
                                     content: `方式: ${DISPOSITION_TYPE[d.dispositionType]}, 数量: ${d.dispositionQty}`,
                                     okText: '批准',
@@ -295,7 +296,7 @@ export default function DefectDetail() {
         okText="提交"
         confirmLoading={dispLoading}
         width={620}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={dispForm} layout="vertical" onFinish={handleDisposition}>
           <Row gutter={16}>

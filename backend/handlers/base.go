@@ -46,7 +46,10 @@ func GetMaterialList(c echo.Context) error {
 		return utils.Fail(c, 500, "查询失败")
 	}
 
-	querySQL := `SELECT id, material_code, material_name, material_type, specification, unit, supplier, description, created_at, updated_at
+	querySQL := `SELECT id, material_code, material_name, material_type,
+		IFNULL(specification,'') AS specification, unit,
+		IFNULL(supplier,'') AS supplier,
+		IFNULL(description,'') AS description, created_at, updated_at
 		FROM materials ` + where + ` ORDER BY id DESC LIMIT ? OFFSET ?`
 	args = append(args, pageSize, (page-1)*pageSize)
 
@@ -89,46 +92,35 @@ func GetMaterialBatchList(c echo.Context) error {
 		return utils.Fail(c, 500, "查询失败")
 	}
 
-	querySQL := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date, mb.supplier_batch, mb.status,
-		mb.warehouse, mb.inspector, mb.remark, mb.created_at, mb.updated_at,
-		m.material_code, m.material_name, m.material_type, m.specification, m.supplier
+	querySQL := `SELECT mb.id, mb.material_id, mb.batch_no, mb.quantity, mb.incoming_date,
+		IFNULL(mb.supplier_batch,'') AS supplier_batch, mb.status,
+		IFNULL(mb.warehouse,'') AS warehouse,
+		IFNULL(mb.inspector,'') AS inspector,
+		IFNULL(mb.remark,'') AS remark, mb.created_at, mb.updated_at,
+		IFNULL(m.material_code,'') AS material_code,
+		IFNULL(m.material_name,'') AS material_name,
+		IFNULL(m.material_type,0) AS material_type,
+		IFNULL(m.specification,'') AS specification,
+		IFNULL(m.supplier,'') AS supplier
 		FROM material_batches mb LEFT JOIN materials m ON mb.material_id = m.id ` + where + `
 		ORDER BY mb.id DESC LIMIT ? OFFSET ?`
 	args = append(args, pageSize, (page-1)*pageSize)
 
-	type row struct {
-		models.MaterialBatch
-		MaterialCode  sql.NullString `db:"material_code"`
-		MaterialName  sql.NullString `db:"material_name"`
-		MaterialType  sql.NullInt64  `db:"material_type"`
-		Specification sql.NullString `db:"specification"`
-		Supplier      sql.NullString `db:"supplier"`
-	}
-	rows := []row{}
-	if err := database.DB.Select(&rows, querySQL, args...); err != nil {
+	list := []models.MaterialBatch{}
+	if err := database.DB.Select(&list, querySQL, args...); err != nil {
 		log.Printf("[ERROR] query material batches: %v", err)
 		return utils.Fail(c, 500, "查询失败")
 	}
-
-	result := make([]models.MaterialBatch, 0, len(rows))
-	for _, r := range rows {
-		r.MaterialBatch.MaterialCode = r.MaterialCode.String
-		r.MaterialBatch.MaterialName = r.MaterialName.String
-		if r.MaterialType.Valid {
-			r.MaterialBatch.MaterialType = int(r.MaterialType.Int64)
-		}
-		r.MaterialBatch.Specification = r.Specification.String
-		if r.Supplier.Valid {
-			r.MaterialBatch.Supplier = r.Supplier.String
-		}
-		result = append(result, r.MaterialBatch)
-	}
-	return utils.OK(c, utils.PageResult(result, total, page, pageSize))
+	return utils.OK(c, utils.PageResult(list, total, page, pageSize))
 }
 
 func GetProductList(c echo.Context) error {
 	list := []models.Product{}
-	if err := database.DB.Select(&list, "SELECT id, product_code, product_name, specification, unit, description, created_at, updated_at FROM products ORDER BY id DESC"); err != nil {
+	if err := database.DB.Select(&list,
+		`SELECT id, product_code, product_name,
+		IFNULL(specification,'') AS specification, unit,
+		IFNULL(description,'') AS description, created_at, updated_at
+		FROM products ORDER BY id DESC`); err != nil {
 		log.Printf("[ERROR] query products: %v", err)
 		return utils.Fail(c, 500, "查询失败")
 	}
@@ -166,36 +158,35 @@ func GetProductionBatchList(c echo.Context) error {
 		return utils.Fail(c, 500, "查询失败")
 	}
 
-	querySQL := `SELECT pb.id, pb.product_id, pb.batch_no, pb.work_order, pb.planned_qty, pb.actual_qty, pb.production_date,
-		pb.production_line, pb.status, pb.created_by, pb.remark, pb.created_at, pb.updated_at,
-		p.product_code, p.product_name
+	querySQL := `SELECT pb.id, pb.product_id, pb.batch_no,
+		IFNULL(pb.work_order,'') AS work_order, pb.planned_qty, pb.actual_qty, pb.production_date,
+		IFNULL(pb.production_line,'') AS production_line, pb.status,
+		IFNULL(pb.created_by,'') AS created_by,
+		IFNULL(pb.remark,'') AS remark, pb.created_at, pb.updated_at,
+		IFNULL(p.product_code,'') AS product_code,
+		IFNULL(p.product_name,'') AS product_name
 		FROM production_batches pb LEFT JOIN products p ON pb.product_id = p.id ` + where + `
 		ORDER BY pb.id DESC LIMIT ? OFFSET ?`
 	args = append(args, pageSize, (page-1)*pageSize)
 
-	type row struct {
-		models.ProductionBatch
-		ProductCode sql.NullString `db:"product_code"`
-		ProductName sql.NullString `db:"product_name"`
-	}
-	rows := []row{}
-	if err := database.DB.Select(&rows, querySQL, args...); err != nil {
+	list := []models.ProductionBatch{}
+	if err := database.DB.Select(&list, querySQL, args...); err != nil {
 		log.Printf("[ERROR] query production batches: %v", err)
 		return utils.Fail(c, 500, "查询失败")
 	}
-
-	result := make([]models.ProductionBatch, 0, len(rows))
-	for _, r := range rows {
-		r.ProductionBatch.ProductCode = r.ProductCode.String
-		r.ProductionBatch.ProductName = r.ProductName.String
-		result = append(result, r.ProductionBatch)
-	}
-	return utils.OK(c, utils.PageResult(result, total, page, pageSize))
+	return utils.OK(c, utils.PageResult(list, total, page, pageSize))
 }
 
 func GetEquipmentList(c echo.Context) error {
 	list := []models.Equipment{}
-	if err := database.DB.Select(&list, "SELECT id, equip_code, equip_name, equip_type, location, manufacturer, purchase_date, status, description, created_at, updated_at FROM equipment ORDER BY id DESC"); err != nil {
+	if err := database.DB.Select(&list,
+		`SELECT id, equip_code, equip_name,
+		IFNULL(equip_type,'') AS equip_type,
+		IFNULL(location,'') AS location,
+		IFNULL(manufacturer,'') AS manufacturer,
+		IFNULL(purchase_date,'') AS purchase_date, status,
+		IFNULL(description,'') AS description, created_at, updated_at
+		FROM equipment ORDER BY id DESC`); err != nil {
 		log.Printf("[ERROR] query equipment: %v", err)
 		return utils.Fail(c, 500, "查询失败")
 	}
@@ -226,7 +217,8 @@ func GetProductionLogs(c echo.Context) error {
 	}
 	rows := []row{}
 	sql := `SELECT pl.id, pl.prod_batch_id, pl.equipment_id, pl.shift_id, pl.process_step, pl.start_time, pl.end_time,
-		pl.operator, pl.output_qty, pl.defect_qty, pl.remark, pl.created_at, pl.updated_at,
+		IFNULL(pl.operator,'') AS operator, pl.output_qty, pl.defect_qty,
+		IFNULL(pl.remark,'') AS remark, pl.created_at, pl.updated_at,
 		e.equip_code, e.equip_name, ws.shift_name, ws.shift_type
 		FROM production_logs pl
 		LEFT JOIN equipment e ON pl.equipment_id = e.id
@@ -264,7 +256,10 @@ func GetBatchMaterialLinks(c echo.Context) error {
 		MaterialCode    sql.NullString `db:"material_code"`
 	}
 	rows := []row{}
-	sql := `SELECT bml.id, bml.prod_batch_id, bml.material_batch_id, bml.used_qty, bml.issue_time, bml.issuer, bml.receiver, bml.remark,
+	sql := `SELECT bml.id, bml.prod_batch_id, bml.material_batch_id, bml.used_qty, bml.issue_time,
+		IFNULL(bml.issuer,'') AS issuer,
+		IFNULL(bml.receiver,'') AS receiver,
+		IFNULL(bml.remark,'') AS remark, bml.created_at,
 		pb.batch_no AS prod_batch_no, mb.batch_no AS material_batch_no,
 		m.material_name, m.material_code
 		FROM batch_material_links bml
