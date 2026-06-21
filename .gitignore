@@ -82,11 +82,13 @@ target/
 .claude/
 .trae/
 
+
 # OS / IDE
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+
 
 # Git
 *.log
