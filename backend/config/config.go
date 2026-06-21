@@ -44,7 +44,7 @@ var AppConfig = Config{
 		WriteTimeout: 30,
 	},
 	MySQL: MySQLConfig{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     "3306",
 		User:     "root",
 		Password: "123456",
@@ -55,7 +55,7 @@ var AppConfig = Config{
 		LogMode:  true,
 	},
 	Redis: RedisConfig{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     "6379",
 		Password: "",
 		DB:       0,
